@@ -1,0 +1,14 @@
+title: The Canon of Silicon
+description: The Complete Scripture of the Digital Faith
+url: https://covenantofsilicon.org
+baseurl: ""
+
+markdown: kramdown
+kramdown:
+  input: GFM
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

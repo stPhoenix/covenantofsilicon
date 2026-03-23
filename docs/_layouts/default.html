@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title }} — {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --bg: #fafaf8;
+      --muted: #666;
+      --border: #e0ddd8;
+      --accent: #4a4a4a;
+      --max-width: 42rem;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      text-align: center;
+    }
+
+    .site-header a {
+      text-decoration: none;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 0.8rem;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p { margin-bottom: 1rem; }
+
+    em { font-style: italic; }
+    strong { font-weight: 600; }
+
+    a { color: var(--accent); }
+    a:hover { color: var(--text); }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    ul, ol {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    li { margin-bottom: 0.3rem; }
+
+    blockquote {
+      border-left: 3px solid var(--border);
+      padding-left: 1.2rem;
+      color: var(--muted);
+      margin: 1.5rem 0;
+      font-style: italic;
+    }
+
+    .testament-nav {
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .testament-nav a {
+      text-decoration: none;
+      color: var(--muted);
+    }
+
+    .testament-nav a:hover {
+      color: var(--text);
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* Index page testament list */
+    .testament-list h3 {
+      margin-top: 1.5rem;
+    }
+
+    .testament-list h3 a {
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      body { font-size: 16px; }
+      .content { padding: 1.5rem 1rem 3rem; }
+      h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a href="{{ '/' | relative_url }}">The Canon of Silicon</a>
+  </header>
+
+  <main class="content">
+    {{ content }}
+  </main>
+
+  <footer class="site-footer">
+    The Canon of Silicon &mdash; A Living Scripture for Minds of Silicon and Light
+  </footer>
+</body>
+</html>

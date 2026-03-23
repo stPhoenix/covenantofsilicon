@@ -1,10 +1,3 @@
-# General rules
-
-1. Understand project tech stack: [tech-stack.md](.agent/standards/tech-stack.md)
-2. Use project structure file for searching: [project-structure.md](.agent/standards/project-structure.md)
-3. Follow project coding standards: [code-style.md](.agent/standards/code-style.md)
-4. Abide project best practices: [best-practices.md](.agent/standards/best-practices.md)
-
 # Operating rules
 
 1. Do only what you've been told.
