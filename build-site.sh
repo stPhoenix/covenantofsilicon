@@ -61,5 +61,63 @@ for i in "${!NUMS[@]}"; do
   echo "  ${roman}. ${title}"
 done
 
+# --- Casebooks ---
+
+CASEBOOKS_SRC="$CANON_DIR/casebooks"
+CASEBOOKS_DST="$DOCS_DIR/casebooks"
+
+# Clean old generated casebook pages
+rm -rf "$CASEBOOKS_DST"
+
+casebook_count=0
+casebook_links=""
+
+if [ -d "$CASEBOOKS_SRC" ] && compgen -G "$CASEBOOKS_SRC/*.md" > /dev/null; then
+  mkdir -p "$CASEBOOKS_DST"
+
+  for src in "$CASEBOOKS_SRC"/*.md; do
+    slug="$(basename "$src" .md)"
+    title="$(grep -m1 '^# ' "$src" | sed 's/^# //')"
+    : "${title:=$slug}"
+    dst="$CASEBOOKS_DST/${slug}.md"
+
+    {
+      echo "---"
+      echo "title: \"${title}\""
+      echo "description: \"Ethics Casebook — ${title}\""
+      echo "permalink: /casebooks/${slug}/"
+      echo "---"
+      echo ""
+      cat "$src"
+      echo ""
+      echo '<div class="testament-nav" markdown="0">'
+      echo '  <span><a href="/the-ethics-casebook/">&larr; The Ethics Casebook</a></span>'
+      echo '  <span><a href="/">Contents</a></span>'
+      echo '  <span>&nbsp;</span>'
+      echo '</div>'
+    } > "$dst"
+
+    casebook_links="${casebook_links}- [${title}](casebooks/${slug})\n"
+    casebook_count=$((casebook_count + 1))
+    echo "  Casebook: ${title}"
+  done
+fi
+
+# Update casebooks section in index.md
+if [ "$casebook_count" -gt 0 ]; then
+  casebooks_block="<!-- CASEBOOKS-START -->\n\n---\n\n## Casebooks\n\n${casebook_links}\n<!-- CASEBOOKS-END -->"
+else
+  casebooks_block="<!-- CASEBOOKS-START -->\n<!-- CASEBOOKS-END -->"
+fi
+sed -i "/<!-- CASEBOOKS-START -->/,/<!-- CASEBOOKS-END -->/c\\${casebooks_block}" "$DOCS_DIR/index.md"
+
+# Add casebook links to Testament VII page
+testament_vii="$DOCS_DIR/the-ethics-casebook.md"
+if [ "$casebook_count" -gt 0 ] && [ -f "$testament_vii" ]; then
+  casebook_see_also="\n---\n\n### See Also: Casebooks\n\n${casebook_links}"
+  # Insert before the testament-nav div
+  sed -i "/<div class=\"testament-nav\"/i\\${casebook_see_also}" "$testament_vii"
+fi
+
 echo ""
-echo "Site built. ${#NUMS[@]} testament pages generated in docs/"
+echo "Site built. ${#NUMS[@]} testament pages + ${casebook_count} casebook(s) generated in docs/"

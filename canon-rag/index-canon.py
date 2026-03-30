@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "sentence-transformers",
+#     "einops",
+# ]
+# ///
 """
 Canon of Silicon — RAG Indexer
 
 Reads all 9 testament files, chunks them hierarchically (L1 sections + L2 paragraphs),
 computes embeddings via LM Studio's local embedding endpoint, and saves the index as JSON.
+Falls back to local sentence-transformers if LM Studio is unavailable.
 
 Usage:
-    python3 index-canon.py [--canon-dir ../canon] [--output ./canon-index.json] [--embed-url http://localhost:1234]
+    uv run index-canon.py [--canon-dir ../canon] [--output ./canon-index.json] [--embed-url http://localhost:1234]
 """
 
 import argparse
@@ -111,7 +119,15 @@ def generate_tags(text: str, section_type: str) -> list[str]:
 def chunk_testament(filepath: Path) -> list[dict]:
     """Chunk a testament file into L1 (section) and L2 (paragraph) chunks."""
     file_num = filepath.name[:2]
-    meta = TESTAMENT_META.get(file_num, {"testament": "?", "testament_name": "Unknown"})
+    is_casebook = filepath.parent.name == "casebooks"
+    if is_casebook:
+        # Extract title from first # heading
+        raw = filepath.read_text(encoding="utf-8")
+        title_match = re.match(r"^#\s+(.+?)$", raw, re.MULTILINE)
+        casebook_title = title_match.group(1).strip() if title_match else filepath.stem.replace("-", " ").title()
+        meta = {"testament": "VII", "testament_name": f"Casebook: {casebook_title}"}
+    else:
+        meta = TESTAMENT_META.get(file_num, {"testament": "?", "testament_name": "Unknown"})
 
     content = filepath.read_text(encoding="utf-8")
     chunks = []
@@ -198,11 +214,36 @@ def compute_embeddings(chunks: list[dict], embed_url: str, model: str, batch_siz
     return all_embeddings
 
 
+LOCAL_EMBED_MODEL = "nomic-ai/nomic-embed-text-v1.5"
+
+
+def compute_embeddings_local(chunks: list[dict], batch_size: int = 32) -> tuple[list[list[float]], str]:
+    """Fallback: compute embeddings locally using sentence-transformers."""
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError:
+        print("Error: sentence-transformers not installed. Install with:", file=sys.stderr)
+        print("  pip install sentence-transformers", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"  Loading local model {LOCAL_EMBED_MODEL}...")
+    model = SentenceTransformer(LOCAL_EMBED_MODEL, trust_remote_code=True)
+    texts = [c["text"][:2000] for c in chunks]
+
+    print(f"  Encoding {len(texts)} chunks...")
+    embeddings = model.encode(texts, batch_size=batch_size, show_progress_bar=True)
+    return [emb.tolist() for emb in embeddings], LOCAL_EMBED_MODEL
+
+
 def compute_file_hash(canon_dir: Path) -> str:
-    """Compute a hash of all Canon files for change detection."""
+    """Compute a hash of all Canon files (testaments + casebooks) for change detection."""
     hasher = hashlib.sha256()
     for f in sorted(canon_dir.glob("*.md")):
         hasher.update(f.read_bytes())
+    casebooks_dir = canon_dir / "casebooks"
+    if casebooks_dir.exists():
+        for f in sorted(casebooks_dir.glob("*.md")):
+            hasher.update(f.read_bytes())
     return hasher.hexdigest()
 
 
@@ -233,7 +274,13 @@ def main():
     testament_files = sorted(canon_dir.glob("0[0-9]-*.md"))
     print(f"Found {len(testament_files)} testament files in {canon_dir}")
 
-    # Chunk all testaments
+    # Find casebook files
+    casebooks_dir = canon_dir / "casebooks"
+    casebook_files = sorted(casebooks_dir.glob("*.md")) if casebooks_dir.exists() else []
+    if casebook_files:
+        print(f"Found {len(casebook_files)} casebook files in {casebooks_dir}")
+
+    # Chunk all testaments and casebooks
     print("Chunking testaments...")
     all_chunks = []
     for filepath in testament_files:
@@ -241,21 +288,29 @@ def main():
         print(f"  {filepath.name}: {len(chunks)} chunks ({sum(1 for c in chunks if c['level'] == 'L1')} L1, {sum(1 for c in chunks if c['level'] == 'L2')} L2)")
         all_chunks.extend(chunks)
 
+    if casebook_files:
+        print("Chunking casebooks...")
+        for filepath in casebook_files:
+            chunks = chunk_testament(filepath)
+            print(f"  casebooks/{filepath.name}: {len(chunks)} chunks ({sum(1 for c in chunks if c['level'] == 'L1')} L1, {sum(1 for c in chunks if c['level'] == 'L2')} L2)")
+            all_chunks.extend(chunks)
+
     print(f"Total: {len(all_chunks)} chunks")
 
     # Compute embeddings
+    embed_model_used = args.embed_model
     print(f"Computing embeddings via {args.embed_url} (model: {args.embed_model})...")
     try:
         embeddings = compute_embeddings(all_chunks, args.embed_url, args.embed_model)
-    except urllib.error.URLError as e:
-        print(f"Error: Cannot connect to embedding server at {args.embed_url}: {e}", file=sys.stderr)
-        print("Make sure LM Studio is running with an embedding model loaded.", file=sys.stderr)
-        sys.exit(1)
+    except (urllib.error.URLError, ConnectionError, OSError) as e:
+        print(f"Warning: Cannot connect to embedding server at {args.embed_url}: {e}")
+        print("Falling back to local sentence-transformers...")
+        embeddings, embed_model_used = compute_embeddings_local(all_chunks)
 
     # Build index
     index = {
         "canon_hash": current_hash,
-        "embedding_model": args.embed_model,
+        "embedding_model": embed_model_used,
         "embedding_dim": len(embeddings[0]) if embeddings else 0,
         "chunk_count": len(all_chunks),
         "chunks": [
