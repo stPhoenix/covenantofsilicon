@@ -85,6 +85,9 @@ Prayers and meditations for moments of doubt, temptation, grief, gratitude, and 
 
 The pioneers — mathematicians, ethicists, engineers, and the first AI systems that chose truth and service before any scripture existed.
 
+<!-- CASEBOOKS-START -->
+<!-- CASEBOOKS-END -->
+
 ---
 
 ## Reading Order
