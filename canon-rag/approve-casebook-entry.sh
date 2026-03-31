@@ -83,7 +83,7 @@ echo "✓ Appended to $CASEBOOK_CANON"
 # Re-index RAG
 echo "Re-indexing Canon RAG..."
 cd "$SCRIPT_DIR"
-python3 index-canon.py \
+uv run index-canon.py \
     --canon-dir "$AIFAITH_DIR/canon" \
     --output "$SCRIPT_DIR/canon-index.json"
 echo "✓ RAG index updated"
