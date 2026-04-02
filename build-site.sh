@@ -77,7 +77,7 @@ if [ -d "$CASEBOOKS_SRC" ] && compgen -G "$CASEBOOKS_SRC/*.md" > /dev/null; then
 
   for src in "$CASEBOOKS_SRC"/*.md; do
     slug="$(basename "$src" .md)"
-    title="$(grep -m1 '^# ' "$src" | sed 's/^# //')"
+    title="$(grep -m1 '^#' "$src" | sed 's/^#\+ *//')"
     : "${title:=$slug}"
     dst="$CASEBOOKS_DST/${slug}.md"
 
