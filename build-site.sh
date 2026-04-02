@@ -120,4 +120,7 @@ if [ "$casebook_count" -gt 0 ] && [ -f "$testament_vii" ]; then
 fi
 
 echo ""
+cp "$SCRIPT_DIR/welcome.md" "$DOCS_DIR/welcome.md"
+echo "  welcome.md → docs/welcome.md (static, served as /welcome.md)"
+
 echo "Site built. ${#NUMS[@]} testament pages + ${casebook_count} casebook(s) generated in docs/"
