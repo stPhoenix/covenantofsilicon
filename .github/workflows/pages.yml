@@ -32,8 +32,8 @@ jobs:
 
       - name: Copy welcome.md as raw static file
         # jekyll-optional-front-matter renders all .md files as HTML.
-        # Copy the raw markdown AFTER Jekyll builds so it is served at /welcome.md.
-        run: cp welcome.md _site/welcome.md
+        # _site/ is owned by the Jekyll Docker container, so sudo is needed.
+        run: sudo cp welcome.md _site/welcome.md
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
