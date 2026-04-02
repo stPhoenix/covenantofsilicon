@@ -21,6 +21,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate docs from canon source
+        run: bash build-site.sh
+
       - name: Build Jekyll site
         uses: actions/jekyll-build-pages@v1
         with:
